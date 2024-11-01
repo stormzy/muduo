@@ -74,24 +74,34 @@ const struct sockaddr_in6* sockets::sockaddr_in6_cast(const struct sockaddr* add
   return static_cast<const struct sockaddr_in6*>(implicit_cast<const void*>(addr));
 }
 
-int sockets::createNonblockingOrDie(sa_family_t family)
+int sockets::createNonblockingOrDie(sa_family_t family, int udp)
 {
-#if VALGRIND
-  int sockfd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
-  if (sockfd < 0)
-  {
-    LOG_SYSFATAL << "sockets::createNonblockingOrDie";
-  }
+ if (!udp){
+  #if VALGRIND
+    int sockfd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
+    if (sockfd < 0)
+    {
+      LOG_SYSFATAL << "sockets::createNonblockingOrDie";
+    }
 
-  setNonBlockAndCloseOnExec(sockfd);
-#else
-  int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
-  if (sockfd < 0)
-  {
-    LOG_SYSFATAL << "sockets::createNonblockingOrDie";
-  }
-#endif
-  return sockfd;
+    setNonBlockAndCloseOnExec(sockfd);
+  #else
+    int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+    if (sockfd < 0)
+    {
+      LOG_SYSFATAL << "sockets::createNonblockingOrDie";
+    }
+  #endif
+    return sockfd;
+
+ } else {
+    int sockfd = ::socket(family, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_UDP);
+    if (sockfd < 0)
+    {
+      LOG_SYSFATAL << "sockets::createNonblockingOrDie UDP create failed";
+    }
+    return sockfd;
+ }
 }
 
 void sockets::bindOrDie(int sockfd, const struct sockaddr* addr)
@@ -169,6 +179,13 @@ ssize_t sockets::read(int sockfd, void *buf, size_t count)
 ssize_t sockets::readv(int sockfd, const struct iovec *iov, int iovcnt)
 {
   return ::readv(sockfd, iov, iovcnt);
+}
+
+ssize_t recvfrom(int sockfd, void *buf, size_t len,
+                struct sockaddr *src_addr)
+{
+  socklen_t addrlen = sizeof(*src_addr);
+  return ::recvfrom(sockfd, buf, len, 0, src_addr, &addrlen);
 }
 
 ssize_t sockets::write(int sockfd, const void *buf, size_t count)

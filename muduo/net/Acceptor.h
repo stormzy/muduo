@@ -31,12 +31,15 @@ class Acceptor : noncopyable
 {
  public:
   typedef std::function<void (int sockfd, const InetAddress&)> NewConnectionCallback;
+  using UdpNewConnectionCallback = std::function<void (int sockfd, const InetAddress&, std::vector<char>&)>;
 
-  Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport);
+  Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport, bool isUdp = false);
   ~Acceptor();
 
   void setNewConnectionCallback(const NewConnectionCallback& cb)
   { newConnectionCallback_ = cb; }
+  void setUdpNewConnectionCallback(const UdpNewConnectionCallback& cb)
+  { udpNewConnectionCallback_ = cb; }
 
   bool listenning() const { return listenning_; }
   void listen();
@@ -48,6 +51,7 @@ class Acceptor : noncopyable
   Socket acceptSocket_;
   Channel acceptChannel_;
   NewConnectionCallback newConnectionCallback_;
+  UdpNewConnectionCallback udpNewConnectionCallback_;
   bool listenning_;
   int idleFd_;
 };

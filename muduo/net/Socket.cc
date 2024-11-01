@@ -126,3 +126,24 @@ void Socket::setKeepAlive(bool on)
   // FIXME CHECK
 }
 
+void Socket::bindUdpPeerAddress(InetAddress* peeraddr)
+{
+  if (sockets::connect(sockfd_, peeraddr->getSockAddr()) == 0) {
+    peeraddr_ = *peeraddr;
+  } else {
+    LOG_SYSERR << "UDP sockets::connect failed.";
+  }
+}
+
+int Socket::recvfrom(char *buf, size_t len, struct sockaddr *src_addr)
+{
+  int nread = static_cast<int>(sockets::recvfrom(sockfd_, buf, len, src_addr));
+  if (nread < 0) {
+    LOG_SYSERR << "UDP sockets::recvfrom failed. errno: " << errno;
+  } else if (nread == 0) {
+    LOG_SYSERR << "UDP recv 0 bytes.";
+  } else {
+    LOG_INFO << "UDP accept success. recv: " << nread;
+  }
+  return nread;
+}

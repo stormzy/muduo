@@ -12,6 +12,7 @@
 #define MUDUO_NET_SOCKET_H
 
 #include <muduo/base/noncopyable.h>
+#include <muduo/net/InetAddress.h>
 
 // struct tcp_info is in <netinet/tcp.h>
 struct tcp_info;
@@ -34,8 +35,8 @@ class InetAddress;
 class Socket : noncopyable
 {
  public:
-  explicit Socket(int sockfd)
-    : sockfd_(sockfd)
+  explicit Socket(int sockfd, bool isUdp = false)
+    : sockfd_(sockfd), isudp_(isUdp)
   { }
 
   // Socket(Socket&&) // move constructor in C++11
@@ -79,8 +80,19 @@ class Socket : noncopyable
   ///
   void setKeepAlive(bool on);
 
+  // call ::connect, udp socket only
+  void bindUdpPeerAddress(InetAddress* peeraddr);
+
+  bool isUdp() const {
+    return isudp_;
+  }
+
+  int recvfrom(char *buf, size_t len, struct sockaddr *src_addr);
+
  private:
   const int sockfd_;
+  bool isudp_;
+  InetAddress peeraddr_;
 };
 
 }  // namespace net

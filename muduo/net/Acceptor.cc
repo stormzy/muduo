@@ -22,9 +22,9 @@
 using namespace muduo;
 using namespace muduo::net;
 
-Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport)
+Acceptor::Acceptor(EventLoop* loop, const InetAddress& listenAddr, bool reuseport, bool isUdp)
   : loop_(loop),
-    acceptSocket_(sockets::createNonblockingOrDie(listenAddr.family())),
+    acceptSocket_(sockets::createNonblockingOrDie(listenAddr.family(), isUdp ? 1 : 0)),
     acceptChannel_(loop, acceptSocket_.fd()),
     listenning_(false),
     idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC))
@@ -57,32 +57,55 @@ void Acceptor::handleRead()
   loop_->assertInLoopThread();
   InetAddress peerAddr;
   //FIXME loop until no more
-  int connfd = acceptSocket_.accept(&peerAddr);
-  if (connfd >= 0)
-  {
-    // string hostport = peerAddr.toIpPort();
-    // LOG_TRACE << "Accepts of " << hostport;
-    if (newConnectionCallback_)
+  if (!acceptSocket_.isUdp()) {
+    int connfd = acceptSocket_.accept(&peerAddr);
+    if (connfd >= 0)
     {
-      newConnectionCallback_(connfd, peerAddr);
+      // string hostport = peerAddr.toIpPort();
+      // LOG_TRACE << "Accepts of " << hostport;
+      if (newConnectionCallback_)
+      {
+        newConnectionCallback_(connfd, peerAddr);
+      }
+      else
+      {
+        sockets::close(connfd);
+      }
     }
     else
     {
-      sockets::close(connfd);
+      LOG_SYSERR << "in Acceptor::handleRead";
+      // Read the section named "The special problem of
+      // accept()ing when you can't" in libev's doc.
+      // By Marc Lehmann, author of libev.
+      if (errno == EMFILE)
+      {
+        ::close(idleFd_);
+        idleFd_ = ::accept(acceptSocket_.fd(), NULL, NULL);
+        ::close(idleFd_);
+        idleFd_ = ::open("/dev/null", O_RDONLY | O_CLOEXEC);
+      }
     }
-  }
-  else
-  {
-    LOG_SYSERR << "in Acceptor::handleRead";
-    // Read the section named "The special problem of
-    // accept()ing when you can't" in libev's doc.
-    // By Marc Lehmann, author of libev.
-    if (errno == EMFILE)
-    {
-      ::close(idleFd_);
-      idleFd_ = ::accept(acceptSocket_.fd(), NULL, NULL);
-      ::close(idleFd_);
-      idleFd_ = ::open("/dev/null", O_RDONLY | O_CLOEXEC);
+  } else {
+    std::vector<char> buffer(1600);
+    sockaddr_in src_addr;
+    int nread = acceptSocket_.recvfrom(&buffer[0], buffer.size(), static_cast<struct sockaddr*>(implicit_cast<void*>(&src_addr)));
+    if (nread > 0) {
+      if (static_cast<size_t>(nread) > buffer.size()){
+        LOG_WARN << "nread > buffer.size when udp acceptSocket recv first packet.";
+      }
+      buffer.resize(nread);
+      int connfd = sockets::createNonblockingOrDie(AF_INET, 1);
+      if (connfd >= 0) {
+        if (udpNewConnectionCallback_) 
+        {
+          udpNewConnectionCallback_(connfd, InetAddress(src_addr), buffer);
+        }
+        else
+        {
+          sockets::close(connfd);
+        }
+      }
     }
   }
 }
