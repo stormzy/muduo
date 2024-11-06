@@ -181,10 +181,10 @@ ssize_t sockets::readv(int sockfd, const struct iovec *iov, int iovcnt)
   return ::readv(sockfd, iov, iovcnt);
 }
 
-ssize_t recvfrom(int sockfd, void *buf, size_t len,
+ssize_t sockets::recvfrom(int sockfd, void *buf, size_t len,
                 struct sockaddr *src_addr)
 {
-  socklen_t addrlen = sizeof(*src_addr);
+  socklen_t addrlen = sizeof(struct sockaddr);
   return ::recvfrom(sockfd, buf, len, 0, src_addr, &addrlen);
 }
 

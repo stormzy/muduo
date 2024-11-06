@@ -24,28 +24,34 @@ class UdpSession :  noncopyable,
 {
 public:
   using Ptr = std::shared_ptr<UdpSession>;
-  using ConnectionCallback = std::function<void(const UdpSession::Ptr&)>;
-  using MessageCallback = std::function<void(const UdpSession::Ptr&, Buffer*)>;
-  using CloseCallback = std::function<void(const UdpSession::Ptr&)>;
   UdpSession(EventLoop* loop,
              const string& name,
              int sockfd,
              const InetAddress& localAddr,
              const InetAddress& peerAddr);
 
+  string name() const { return name_; }
+  const InetAddress& localAddress() const { return localAddr_; }
+  const InetAddress& peerAddress() const { return peerAddr_; }
+
+  void forceClose();
+  void forceCloseWithDelay(double seconds);
+
   void send(const void* data, int len);
   void send(const StringPiece& message);
   void send(Buffer* message); 
 
-  void setConnectionCallback(const ConnectionCallback& cb)
+  void setConnectionCallback(const UdpConnectionCallback& cb)
   { connectionCallback_ = cb; }
 
-  void setMessageCallback(const MessageCallback& cb)
+  void setMessageCallback(const UdpMessageCallback& cb)
   { messageCallback_ = cb; }
 
-  void setWriteCompleteCallback(const WriteCompleteCallback& cb)
-  { writeCompleteCallback_ = cb; }
+  /// Internal use only.
+  void setCloseCallback(const UdpCloseCallback& cb)
+  { closeCallback_ = cb; }
 
+  void sessionEstablished();
 private:
   void handleRead(Timestamp receiveTime);
   void handleWrite();
@@ -63,10 +69,9 @@ private:
   std::unique_ptr<Channel> channel_;
   const InetAddress localAddr_;
   const InetAddress peerAddr_;
-  ConnectionCallback connectionCallback_;
-  MessageCallback messageCallback_;
-  WriteCompleteCallback writeCompleteCallback_;
-  CloseCallback closeCallback_;
+  UdpConnectionCallback connectionCallback_;
+  UdpMessageCallback messageCallback_;
+  UdpCloseCallback closeCallback_;
   Buffer inputBuffer_;
   Buffer outputBuffer_; // FIXME: use list<Buffer> as output buffer.
 };

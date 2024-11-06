@@ -55,9 +55,9 @@ void Acceptor::listen()
 void Acceptor::handleRead()
 {
   loop_->assertInLoopThread();
-  InetAddress peerAddr;
   //FIXME loop until no more
   if (!acceptSocket_.isUdp()) {
+    InetAddress peerAddr;
     int connfd = acceptSocket_.accept(&peerAddr);
     if (connfd >= 0)
     {
@@ -88,8 +88,8 @@ void Acceptor::handleRead()
     }
   } else {
     std::vector<char> buffer(1600);
-    sockaddr_in src_addr;
-    int nread = acceptSocket_.recvfrom(&buffer[0], buffer.size(), static_cast<struct sockaddr*>(implicit_cast<void*>(&src_addr)));
+    sockaddr_in peer_addr;
+    int nread = acceptSocket_.recvfrom(&buffer[0], buffer.size(), static_cast<struct sockaddr*>(implicit_cast<void*>(&peer_addr)));
     if (nread > 0) {
       if (static_cast<size_t>(nread) > buffer.size()){
         LOG_WARN << "nread > buffer.size when udp acceptSocket recv first packet.";
@@ -99,7 +99,7 @@ void Acceptor::handleRead()
       if (connfd >= 0) {
         if (udpNewConnectionCallback_) 
         {
-          udpNewConnectionCallback_(connfd, InetAddress(src_addr), buffer);
+          udpNewConnectionCallback_(connfd, InetAddress(peer_addr), buffer);
         }
         else
         {

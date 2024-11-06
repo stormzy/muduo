@@ -81,13 +81,13 @@ class Socket : noncopyable
   void setKeepAlive(bool on);
 
   // call ::connect, udp socket only
-  void bindUdpPeerAddress(InetAddress* peeraddr);
+  void bindUdpPeerAddress(const InetAddress& peerAddr);
 
   bool isUdp() const {
     return isudp_;
   }
 
-  int recvfrom(char *buf, size_t len, struct sockaddr *src_addr);
+  int recvfrom(char *buf, size_t len, struct sockaddr *peerAddr);
 
  private:
   const int sockfd_;

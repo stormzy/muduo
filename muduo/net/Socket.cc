@@ -126,18 +126,18 @@ void Socket::setKeepAlive(bool on)
   // FIXME CHECK
 }
 
-void Socket::bindUdpPeerAddress(InetAddress* peeraddr)
+void Socket::bindUdpPeerAddress(const InetAddress& peerAddr)
 {
-  if (sockets::connect(sockfd_, peeraddr->getSockAddr()) == 0) {
-    peeraddr_ = *peeraddr;
+  if (sockets::connect(sockfd_, peerAddr.getSockAddr()) == 0) {
+    peeraddr_ = peerAddr;
   } else {
     LOG_SYSERR << "UDP sockets::connect failed.";
   }
 }
 
-int Socket::recvfrom(char *buf, size_t len, struct sockaddr *src_addr)
+int Socket::recvfrom(char *buf, size_t len, struct sockaddr *peerAddr)
 {
-  int nread = static_cast<int>(sockets::recvfrom(sockfd_, buf, len, src_addr));
+  int nread = static_cast<int>(sockets::recvfrom(sockfd_, buf, len, peerAddr));
   if (nread < 0) {
     LOG_SYSERR << "UDP sockets::recvfrom failed. errno: " << errno;
   } else if (nread == 0) {

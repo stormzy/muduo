@@ -5,6 +5,8 @@
 #include <muduo/base/Atomic.h>
 #include <muduo/net/UdpSession.h>
 
+#include <map>
+
 namespace muduo
 {
 namespace net
@@ -22,8 +24,20 @@ class UdpServer : public noncopyable
             const string& nameArg);
     ~UdpServer();  // force out-line dtor, for std::unique_ptr members.
 
+    void setConnectionCallback(const UdpConnectionCallback& cb)
+    { connectionCallback_ = cb; }
+
+    /// Set message callback.
+    /// Not thread safe.
+    void setMessageCallback(const UdpMessageCallback& cb)
+    { messageCallback_ = cb; }
+
+    void setCloseCallback(const UdpCloseCallback& cb)
+    { closeCallback_ = cb; }
+
   private:
     void newConnection(int sockfd, const InetAddress&, std::vector<char>&);
+    void removeSession();
 
   private:
     EventLoop* loop_; // bind socket loop
@@ -32,7 +46,12 @@ class UdpServer : public noncopyable
     InetAddress listenAddr_;
     std::unique_ptr<Acceptor> acceptor_; // avoid revealing Acceptor
     std::shared_ptr<EventLoopThreadPool> threadPool_;
-
+    UdpConnectionCallback connectionCallback_;
+    UdpMessageCallback messageCallback_;
+    UdpCloseCallback closeCallback_;
+    // always in loop thread
+    int nextSessionId_;
+    std::map<string, UdpSession::Ptr> sessions_;
 };
 
 } // namespace net

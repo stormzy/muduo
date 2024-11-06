@@ -8,7 +8,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-option(MUDUO_BUILD_EXAMPLES "Build Muduo examples" ON)
+option(MUDUO_BUILD_EXAMPLES "Build Muduo examples" OFF)
+option(CMAKE_BUILD_NO_EXAMPLES "cmake build no examples" ON)
 
 set(CXX_FLAGS
  -g
