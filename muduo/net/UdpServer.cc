@@ -20,10 +20,42 @@ UdpServer::UdpServer(EventLoop* loop,
     listenAddr_(listenAddr),
     acceptor_(new Acceptor(loop, listenAddr, true, true)),
     threadPool_(new EventLoopThreadPool(loop, name_)),
-    nextSessionId_(1)
+    nextConnId_(1)
 {
     acceptor_->setUdpNewConnectionCallback(
         std::bind(&UdpServer::newConnection, this, _1, _2, _3));
+}
+
+UdpServer::~UdpServer()
+{
+  loop_->assertInLoopThread();
+  LOG_TRACE << "UdpServer::~UdpServer [" << name_ << "] destructing";
+
+  for (auto& item : connections_)
+  {
+    UdpConnectionPtr conn(item.second);
+    item.second.reset();
+    conn->getLoop()->runInLoop(
+      std::bind(&UdpConnection::connectDestroyed, conn));
+  }
+}
+
+void UdpServer::setThreadNum(int numThreads)
+{
+  assert(0 <= numThreads);
+  threadPool_->setThreadNum(numThreads);
+}
+
+void UdpServer::start()
+{
+  if (started_.getAndSet(1) == 0)
+  {
+    threadPool_->start(threadInitCallback_);
+
+    assert(!acceptor_->listenning());
+    loop_->runInLoop(
+        std::bind(&Acceptor::listen, get_pointer(acceptor_)));
+  }
 }
 
 void UdpServer::newConnection(int sockfd, const InetAddress& peerAddr, std::vector<char>& recvData)
@@ -35,21 +67,21 @@ void UdpServer::newConnection(int sockfd, const InetAddress& peerAddr, std::vect
   sock.bindUdpPeerAddress(peerAddr);
   
   char buf[64];
-  snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextSessionId_);
-  ++nextSessionId_;
-  string sessionName = name_ + buf;
+  snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_);
+  ++nextConnId_;
+  string connName = name_ + buf;
   LOG_INFO << "UdpServer::newConnection [" << name_
-           << "] - new connection [" << sessionName
+           << "] - new connection [" << connName
            << "] from " << peerAddr.toIpPort();
-  UdpConnection::Ptr session = std::make_shared<UdpConnection> (ioLoop, 
-                                                          sessionName, 
+  UdpConnection::Ptr conn = std::make_shared<UdpConnection> (ioLoop, 
+                                                          connName, 
                                                           sock.fd(),
                                                           listenAddr_,
                                                           peerAddr);
-  sessions_[sessionName] = session;
-  session->setConnectionCallback(connectionCallback_);
-  session->setMessageCallback(messageCallback_);
-  session->setCloseCallback(closeCallback_);
+  connections_[connName] = conn;
+  conn->setConnectionCallback(connectionCallback_);
+  conn->setMessageCallback(messageCallback_);
+  conn->setCloseCallback(closeCallback_);
 
-  ioLoop->runInLoop(std::bind(&UdpConnection::sessionEstablished, session));
+  ioLoop->runInLoop(std::bind(&UdpConnection::connectionEstablished, conn));
 }

@@ -37,13 +37,18 @@ UdpConnection::UdpConnection(EventLoop* loop,
             << " fd=" << sockfd;
 }
 
-void UdpConnection::sessionEstablished()
+void UdpConnection::connectionEstablished()
 {
   loop_->assertInLoopThread();
   channel_->tie(shared_from_this());
   channel_->enableReading();
 
   connectionCallback_(shared_from_this());
+}
+
+void UdpConnection::connectDestroyed()
+{
+  
 }
 
 void UdpConnection::handleRead(Timestamp receiveTime)

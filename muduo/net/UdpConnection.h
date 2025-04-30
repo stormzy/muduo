@@ -30,6 +30,7 @@ public:
              const InetAddress& localAddr,
              const InetAddress& peerAddr);
 
+  EventLoop* getLoop() const { return loop_; }
   string name() const { return name_; }
   const InetAddress& localAddress() const { return localAddr_; }
   const InetAddress& peerAddress() const { return peerAddr_; }
@@ -51,7 +52,9 @@ public:
   void setCloseCallback(const UdpCloseCallback& cb)
   { closeCallback_ = cb; }
 
-  void sessionEstablished();
+  void connectionEstablished();
+  // called when TcpServer has removed me from its map
+  void connectDestroyed();  // should be called only once
 private:
   void handleRead(Timestamp receiveTime);
   void handleWrite();
@@ -72,6 +75,7 @@ private:
   UdpConnectionCallback connectionCallback_;
   UdpMessageCallback messageCallback_;
   UdpCloseCallback closeCallback_;
+
   Buffer inputBuffer_;
   Buffer outputBuffer_; // FIXME: use list<Buffer> as output buffer.
 };

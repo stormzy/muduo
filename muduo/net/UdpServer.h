@@ -19,10 +19,19 @@ class EventLoopThreadPool;
 class UdpServer : public noncopyable
 {
   public:
+    using ThreadInitCallback = std::function<void(EventLoop*)>;
     UdpServer(EventLoop* loop,
             const InetAddress& listenAddr,
             const string& nameArg);
     ~UdpServer();  // force out-line dtor, for std::unique_ptr members.
+
+    void start();
+    void setThreadNum(int numThreads);
+    void setThreadInitCallback(const ThreadInitCallback& cb)
+    { threadInitCallback_ = cb; }
+    /// valid after calling start()
+    std::shared_ptr<EventLoopThreadPool> threadPool()
+    { return threadPool_; }
 
     void setConnectionCallback(const UdpConnectionCallback& cb)
     { connectionCallback_ = cb; }
@@ -37,7 +46,7 @@ class UdpServer : public noncopyable
 
   private:
     void newConnection(int sockfd, const InetAddress&, std::vector<char>&);
-    void removeSession();
+    void removeConnection();
 
   private:
     EventLoop* loop_; // bind socket loop
@@ -49,9 +58,12 @@ class UdpServer : public noncopyable
     UdpConnectionCallback connectionCallback_;
     UdpMessageCallback messageCallback_;
     UdpCloseCallback closeCallback_;
+    ThreadInitCallback threadInitCallback_;
+    AtomicInt32 started_;
+
     // always in loop thread
-    int nextSessionId_;
-    std::map<string, UdpConnection::Ptr> sessions_;
+    int nextConnId_;
+    std::map<string, UdpConnection::Ptr> connections_;
 };
 
 } // namespace net
