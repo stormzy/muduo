@@ -75,11 +75,11 @@ void defaultConnectionCallback(const TcpConnectionPtr& conn);
 void defaultMessageCallback(const TcpConnectionPtr& conn,
                             Buffer* buffer,
                             Timestamp receiveTime);
-class UdpSession;
-using UdpSessionPtr = std::shared_ptr<UdpSession>;
-using UdpConnectionCallback = std::function<void(const UdpSessionPtr&)>;
-using UdpMessageCallback = std::function<void(const UdpSessionPtr&, Buffer*)>;
-using UdpCloseCallback = std::function<void(const UdpSessionPtr&)>;
+class UdpConnection;
+using UdpConnectionPtr = std::shared_ptr<UdpConnection>;
+using UdpConnectionCallback = std::function<void(const UdpConnectionPtr&)>;
+using UdpMessageCallback = std::function<void(const UdpConnectionPtr&, Buffer*)>;
+using UdpCloseCallback = std::function<void(const UdpConnectionPtr&)>;
 }  // namespace net
 }  // namespace muduo
 

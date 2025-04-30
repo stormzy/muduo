@@ -3,7 +3,7 @@
 
 #include <muduo/base/Types.h>
 #include <muduo/base/Atomic.h>
-#include <muduo/net/UdpSession.h>
+#include <muduo/net/UdpConnection.h>
 
 #include <map>
 
@@ -51,7 +51,7 @@ class UdpServer : public noncopyable
     UdpCloseCallback closeCallback_;
     // always in loop thread
     int nextSessionId_;
-    std::map<string, UdpSession::Ptr> sessions_;
+    std::map<string, UdpConnection::Ptr> sessions_;
 };
 
 } // namespace net

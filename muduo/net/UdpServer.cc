@@ -41,7 +41,7 @@ void UdpServer::newConnection(int sockfd, const InetAddress& peerAddr, std::vect
   LOG_INFO << "UdpServer::newConnection [" << name_
            << "] - new connection [" << sessionName
            << "] from " << peerAddr.toIpPort();
-  UdpSession::Ptr session = std::make_shared<UdpSession> (ioLoop, 
+  UdpConnection::Ptr session = std::make_shared<UdpConnection> (ioLoop, 
                                                           sessionName, 
                                                           sock.fd(),
                                                           listenAddr_,
@@ -51,5 +51,5 @@ void UdpServer::newConnection(int sockfd, const InetAddress& peerAddr, std::vect
   session->setMessageCallback(messageCallback_);
   session->setCloseCallback(closeCallback_);
 
-  ioLoop->runInLoop(std::bind(&UdpSession::sessionEstablished, session));
+  ioLoop->runInLoop(std::bind(&UdpConnection::sessionEstablished, session));
 }

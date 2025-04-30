@@ -1,4 +1,4 @@
-#include <muduo/net/UdpSession.h>
+#include <muduo/net/UdpConnection.h>
 
 #include <muduo/base/Logging.h>
 #include <muduo/base/WeakCallback.h>
@@ -12,7 +12,7 @@
 using namespace muduo;
 using namespace muduo::net;
 
-UdpSession::UdpSession(EventLoop* loop,
+UdpConnection::UdpConnection(EventLoop* loop,
              const string& name,
              int sockfd,
              const InetAddress& localAddr,
@@ -26,18 +26,18 @@ UdpSession::UdpSession(EventLoop* loop,
     peerAddr_(peerAddr)
 {
   channel_->setReadCallback(
-      std::bind(&UdpSession::handleRead, this, _1));
+      std::bind(&UdpConnection::handleRead, this, _1));
   channel_->setWriteCallback(
-      std::bind(&UdpSession::handleWrite, this));
+      std::bind(&UdpConnection::handleWrite, this));
   channel_->setCloseCallback(
-      std::bind(&UdpSession::handleClose, this));
+      std::bind(&UdpConnection::handleClose, this));
   channel_->setErrorCallback(
-      std::bind(&UdpSession::handleError, this));
-  LOG_DEBUG << "UdpSession::ctor[" <<  name_ << "] at " << this
+      std::bind(&UdpConnection::handleError, this));
+  LOG_DEBUG << "UdpConnection::ctor[" <<  name_ << "] at " << this
             << " fd=" << sockfd;
 }
 
-void UdpSession::sessionEstablished()
+void UdpConnection::sessionEstablished()
 {
   loop_->assertInLoopThread();
   channel_->tie(shared_from_this());
@@ -46,7 +46,7 @@ void UdpSession::sessionEstablished()
   connectionCallback_(shared_from_this());
 }
 
-void UdpSession::handleRead(Timestamp receiveTime)
+void UdpConnection::handleRead(Timestamp receiveTime)
 {
   loop_->assertInLoopThread();
   int savedErrno = 0;
@@ -62,12 +62,12 @@ void UdpSession::handleRead(Timestamp receiveTime)
   else
   {
     errno = savedErrno;
-    LOG_SYSERR << "UdpSession::handleRead";
+    LOG_SYSERR << "UdpConnection::handleRead";
     handleError();
   }
 }
 
-void UdpSession::handleWrite()
+void UdpConnection::handleWrite()
 {
   loop_->assertInLoopThread();
   if (channel_->isWriting())
@@ -84,12 +84,12 @@ void UdpSession::handleWrite()
       } 
       else 
       {
-        LOG_SYSERR << "UdpSession::handleWrite sent bytes is less than outputBuffer.readableBytes.";
+        LOG_SYSERR << "UdpConnection::handleWrite sent bytes is less than outputBuffer.readableBytes.";
       }
     }
     else
     {
-      LOG_SYSERR << "UdpSession::handleWrite sockets::write return: " << n;
+      LOG_SYSERR << "UdpConnection::handleWrite sockets::write return: " << n;
     }
   }
   else
@@ -99,26 +99,26 @@ void UdpSession::handleWrite()
   }
 }
 
-void UdpSession::handleClose()
+void UdpConnection::handleClose()
 {
   loop_->assertInLoopThread();
   LOG_TRACE << "fd = " << channel_->fd();
   // we don't close fd, leave it to dtor, so we can find leaks easily.
   channel_->disableAll();
 
-  UdpSession::Ptr guardThis(shared_from_this());
+  UdpConnection::Ptr guardThis(shared_from_this());
   // must be the last line
   closeCallback_(guardThis);
 }
 
-void UdpSession::handleError()
+void UdpConnection::handleError()
 {
   int err = sockets::getSocketError(channel_->fd());
   LOG_ERROR << "TcpConnection::handleError [" << name_
             << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }
 
-void UdpSession::send(const void* data, int len)
+void UdpConnection::send(const void* data, int len)
 {
   if (loop_->isInLoopThread()) 
   {
@@ -130,7 +130,7 @@ void UdpSession::send(const void* data, int len)
   }
 }
 
-void UdpSession::send(const StringPiece& message)
+void UdpConnection::send(const StringPiece& message)
 {
   if (!message.empty())
   {
@@ -140,13 +140,13 @@ void UdpSession::send(const StringPiece& message)
     }
     else
     {
-      void (UdpSession::*fp)(const StringPiece& message) = &UdpSession::sendInLoop;
+      void (UdpConnection::*fp)(const StringPiece& message) = &UdpConnection::sendInLoop;
       loop_->runInLoop(std::bind(fp, this, string(message)));
     }
   }
 }
 
-void UdpSession::send(Buffer* buf)
+void UdpConnection::send(Buffer* buf)
 {
   assert(buf);
   if (buf) 
@@ -158,18 +158,18 @@ void UdpSession::send(Buffer* buf)
     }
     else
     {
-      void (UdpSession::*fp)(const StringPiece& message) = &UdpSession::sendInLoop;
+      void (UdpConnection::*fp)(const StringPiece& message) = &UdpConnection::sendInLoop;
       loop_->runInLoop(std::bind(fp, this, buf->retrieveAllAsString()));
     }
   }
 }
 
-void UdpSession::sendInLoop(const StringPiece& message)
+void UdpConnection::sendInLoop(const StringPiece& message)
 {
   sendInLoop(message.data(), message.size());
 }
 
-void UdpSession::sendInLoop(const void* data, size_t len)
+void UdpConnection::sendInLoop(const void* data, size_t len)
 {
   loop_->assertInLoopThread();
   ssize_t nwrote = 0;
@@ -184,7 +184,7 @@ void UdpSession::sendInLoop(const void* data, size_t len)
       remaining = len - nwrote;
       if (remaining > 0)
       {
-        LOG_WARN << "UdpSession::sendInLoop sent bytes is less than data len.";
+        LOG_WARN << "UdpConnection::sendInLoop sent bytes is less than data len.";
       }
     }
     else // nwrote < 0
@@ -192,7 +192,7 @@ void UdpSession::sendInLoop(const void* data, size_t len)
       nwrote = 0;
       if (errno != EWOULDBLOCK)
       {
-        LOG_SYSERR << "UdpSession::sendInLoop";
+        LOG_SYSERR << "UdpConnection::sendInLoop";
         if (errno == EPIPE || errno == ECONNRESET) // FIXME: any others?
         {
           faultError = true;

@@ -26,7 +26,7 @@ set(net_SRCS
   Timer.cc
   TimerQueue.cc
   UdpServer.cc
-  UdpSession.cc
+  UdpConnection.cc
   )
 
 add_library(muduo_net ${net_SRCS})
@@ -53,7 +53,7 @@ set(HEADERS
   TcpServer.h
   TimerId.h
   UdpServer.h
-  UdpSession.h
+  UdpConnection.h
   )
 install(FILES ${HEADERS} DESTINATION include/muduo/net)
 

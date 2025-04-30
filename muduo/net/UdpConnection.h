@@ -1,5 +1,5 @@
-#ifndef MUDUO_NET_UDPSESSION_H
-#define MUDUO_NET_UDPSESSION_H
+#ifndef MUDUO_NET_UdpConnection_H
+#define MUDUO_NET_UdpConnection_H
 
 #include <muduo/base/noncopyable.h>
 #include <muduo/base/StringPiece.h>
@@ -19,12 +19,12 @@ class Channel;
 class EventLoop;
 class Socket;
 
-class UdpSession :  noncopyable,
-                    public std::enable_shared_from_this<UdpSession>
+class UdpConnection :  noncopyable,
+                    public std::enable_shared_from_this<UdpConnection>
 {
 public:
-  using Ptr = std::shared_ptr<UdpSession>;
-  UdpSession(EventLoop* loop,
+  using Ptr = std::shared_ptr<UdpConnection>;
+  UdpConnection(EventLoop* loop,
              const string& name,
              int sockfd,
              const InetAddress& localAddr,
@@ -79,4 +79,4 @@ private:
 } // namespace net
 } // namespace muduo
 
-#endif //MUDUO_NET_UDPSESSION_H
+#endif //MUDUO_NET_UdpConnection_H
