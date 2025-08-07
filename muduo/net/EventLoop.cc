@@ -78,7 +78,7 @@ EventLoop::EventLoop()
   if (t_loopInThisThread)
   {
     LOG_FATAL << "Another EventLoop " << t_loopInThisThread
-              << " exists in this thread " << threadId_;
+              << " exists in this thread " << threadId_; 
   }
   else
   {
