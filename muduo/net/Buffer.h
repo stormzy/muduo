@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <string.h>
 //#include <unistd.h>  // ssize_t
+#include <memory> // shared_ptr
 
 namespace muduo
 {
@@ -42,6 +43,7 @@ namespace net
 class Buffer : public muduo::copyable
 {
  public:
+  using Ptr = std::shared_ptr<Buffer>;
   static const size_t kCheapPrepend = 8;
   static const size_t kInitialSize = 1024;
 

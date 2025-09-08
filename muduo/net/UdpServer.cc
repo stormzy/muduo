@@ -52,7 +52,7 @@ void UdpServer::start()
   {
     threadPool_->start(threadInitCallback_);
 
-    assert(!acceptor_->listenning());
+    assert(!acceptor_->listening());
     loop_->runInLoop(
         std::bind(&Acceptor::listen, get_pointer(acceptor_)));
   }
@@ -64,7 +64,7 @@ void UdpServer::newConnection(int sockfd, const InetAddress& peerAddr, std::vect
   EventLoop* ioLoop = threadPool_->getNextLoop();
   Socket sock(sockfd, true);
   sock.bindAddress(listenAddr_);
-  sock.bindUdpPeerAddress(peerAddr);
+  sock.bindUdpPeerAddress(peerAddr); // call ::connect
   
   char buf[64];
   snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_);

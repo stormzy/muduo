@@ -51,6 +51,7 @@ class Timestamp : public muduo::copyable
   bool valid() const { return microSecondsSinceEpoch_ > 0; }
 
   // for internal usage.
+  int64_t milliSecondsSinceEpoch() const { return microSecondsSinceEpoch_ / 1000; }
   int64_t microSecondsSinceEpoch() const { return microSecondsSinceEpoch_; }
   time_t secondsSinceEpoch() const
   { return static_cast<time_t>(microSecondsSinceEpoch_ / kMicroSecondsPerSecond); }

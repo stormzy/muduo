@@ -33,6 +33,9 @@ class UdpServer : public noncopyable
     std::shared_ptr<EventLoopThreadPool> threadPool()
     { return threadPool_; }
 
+    void setEventLoopThreadPool(std::shared_ptr<EventLoopThreadPool> threadPool) 
+    { threadPool_ = threadPool; }
+
     void setConnectionCallback(const UdpConnectionCallback& cb)
     { connectionCallback_ = cb; }
 

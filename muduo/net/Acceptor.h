@@ -41,7 +41,7 @@ class Acceptor : noncopyable
   void setUdpNewConnectionCallback(const UdpNewConnectionCallback& cb)
   { udpNewConnectionCallback_ = cb; }
 
-  bool listenning() const { return listenning_; }
+  bool listening() const { return listening_; }
   void listen();
 
  private:
@@ -52,7 +52,7 @@ class Acceptor : noncopyable
   Channel acceptChannel_;
   NewConnectionCallback newConnectionCallback_;
   UdpNewConnectionCallback udpNewConnectionCallback_;
-  bool listenning_;
+  bool listening_;
   int idleFd_;
 };
 

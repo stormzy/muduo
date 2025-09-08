@@ -78,7 +78,7 @@ void defaultMessageCallback(const TcpConnectionPtr& conn,
 class UdpConnection;
 using UdpConnectionPtr = std::shared_ptr<UdpConnection>;
 using UdpConnectionCallback = std::function<void(const UdpConnectionPtr&)>;
-using UdpMessageCallback = std::function<void(const UdpConnectionPtr&, Buffer*)>;
+using UdpMessageCallback = std::function<void(const UdpConnectionPtr&, Buffer*,Timestamp)>;
 using UdpCloseCallback = std::function<void(const UdpConnectionPtr&)>;
 }  // namespace net
 }  // namespace muduo
