@@ -13,7 +13,7 @@ RtpJitterBuffer::RtpJitterBuffer(const RtpSortedPacketCallBack& sortedPacketCall
 
 void RtpJitterBuffer::inputRtpPacket(RtpPacket::Ptr packet)
 {
-    uint16_t seq = packet->seq_;
+    uint16_t seq = packet->seq();
 
     if (!started_) {
         started_ = true;

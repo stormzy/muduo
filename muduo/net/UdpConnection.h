@@ -55,6 +55,8 @@ public:
   void connectionEstablished();
   // called when TcpServer has removed me from its map
   void connectDestroyed();  // should be called only once
+
+  Buffer& inputBuffer() { return inputBuffer_; }
 private:
   void handleRead(Timestamp receiveTime);
   void handleWrite();

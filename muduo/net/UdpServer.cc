@@ -77,11 +77,12 @@ void UdpServer::newConnection(int sockfd, const InetAddress& peerAddr, std::vect
                                                           connName, 
                                                           sock.fd(),
                                                           listenAddr_,
-                                                          peerAddr);
+                                                          peerAddr);                                                          
   connections_[connName] = conn;
   conn->setConnectionCallback(connectionCallback_);
   conn->setMessageCallback(messageCallback_);
   conn->setCloseCallback(closeCallback_);
+  conn->inputBuffer().append(recvData.data(), recvData.size());
 
   ioLoop->runInLoop(std::bind(&UdpConnection::connectionEstablished, conn));
 }

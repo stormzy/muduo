@@ -12,9 +12,24 @@ class RtpPacket {
 public:
     using Ptr = std::shared_ptr<RtpPacket>;
 
-    uint16_t seq_;
+    RtpPacket() = default;
+    ~RtpPacket() = default;
+
+    RtpPacket(Buffer::Ptr buffer);
+
+    uint16_t seq() { return header_.seq; }
+    uint32_t timestamp() { return header_.timestamp; }
+    uint32_t ssrc() { return header_.ssrc; }
+
+private:
+    bool parse(Buffer::Ptr buffer);
+
+public:
     Timestamp receiveTime_;
-    Buffer::Ptr buffer_;
+
+    RtpHeader header_;
+    Buffer::Ptr buffer_; // include header
+    size_t payloadLength_;
 };
 
 

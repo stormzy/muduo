@@ -1,0 +1,24 @@
+#ifndef MUDUO_RTP_RTPDEFINES
+#define MUDUO_RTP_RTPDEFINES
+
+#include <cstdint>
+
+const size_t kPayloadH264 = 98;
+
+
+#define PAYLOAD_H264 98
+#define PAYLOAD_H264_RTX 99
+#define PAYLOAD_G711_U 0
+#define PAYLOAD_G711_A 8
+#define PAYLOAD_AAC 104
+#define PAYLOAD_OPUS 100
+#define PAYLOAD_H265 110
+#define PAYLOAD_H265_RTX 111
+#define PAYLOAD_FFMPEG_RTP_TS 33
+#define PAYLOAD_CAMERA_PS 96
+#define PAYLOAD_AV1 45
+#define PAYLOAD_AV1_RTX 46
+
+#define RTP_MTU_SIZE 1400
+
+#endif // MUDUO_RTP_RTPDEFINES

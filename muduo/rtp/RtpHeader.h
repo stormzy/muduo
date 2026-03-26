@@ -4,43 +4,71 @@
 #include <cstdint>
 #include <vector>
 
+/** rfc url: https://www.rfc-editor.org/rfc/rfc1889.html#section-5.1
+ * 
+ * The RTP header has the following format:
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |V=2|P|X|  CC   |M|     PT      |       sequence number         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           timestamp                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           synchronization source (SSRC) identifier            |
+   +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+   |            contributing source (CSRC) identifiers             |
+   |                             ....                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+
 class RtpHeader {
 public:
-#if __BYTE_ORDER == __BIG_ENDIAN
-    //版本号,固定为2
-    uint32_t version: 2;
-    //havePadding
-    uint32_t havePadding: 1;
-    //扩展
-    uint32_t haveExtension: 1;
-    //csrcCount
-    uint32_t csrcCount: 4;
-    //mark
-    uint32_t mark: 1;
-    //负载类型
-    uint32_t pt: 7;
-#else
-    //csrcCount
-    uint32_t csrcCount: 4;
-    //扩展
-    uint32_t haveExtension: 1;
-    //havePadding
-    uint32_t havePadding: 1; // rtp packet size is multiple of 4
-    //版本号,固定为2
-    uint32_t version: 2;
-    //负载类型
-    uint32_t pt: 7;
-    //mark finish of one frame
-    uint32_t mark: 1;
-#endif
+    // 最小的RTP头部大小（没有CSRC）
+    static constexpr size_t kMinHeaderSize = 12;
 
-    uint16_t seq;
-    uint32_t timeStamp;
-    uint32_t ssrc;
+    size_t length() {
+        return kMinHeaderSize + csrcs.size();
+    }
+
+    void clear() {
+        version = 2;
+        has_padding = false;
+        has_extension = false;
+        csrc_count = 0;
+        marker = false;
+        pt = 0;
+        seq = 0;
+        timestamp = 0;
+        ssrc = 0;
+
+        std::vector<uint32_t> tmp;
+        csrcs.swap(tmp);
+    }
+
+public:
+    uint8_t version = 2;         // 2 bits, RFC规定通常为2
+    bool has_padding = false;    // 1 bit
+    bool has_extension = false;  // 1 bit
+    uint8_t csrc_count = 0;      // 4 bits
+    bool marker = false;         // 1 bit
+    uint8_t pt = 0;    // 7 bits
+
+    uint16_t seq = 0;
+    uint32_t timestamp = 0;
+    uint32_t ssrc = 0;
+
     //负载,如果有csrc和ext,前面为 4 * csrcCount + (4 + 4 * ext_len)
     // Note: payloadSize is not a member of RtpHeader !!!
-    // uint8_t defaultPayloadMemoryPlaceholder;
-
+    std::vector<uint32_t> csrcs; // most 15 ele
 } __attribute__((packed));
+
+union aaa
+{
+    uint16_t a: 1;
+
+    /* data */
+};
+
 
 #endif // MUDUO_RTP_RTPHEADER_H

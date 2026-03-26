@@ -19,12 +19,10 @@ void RtpSession::onMessage(const UdpConnectionPtr& conn, Buffer* buf, Timestamp 
         return;
     }
 
-    const char* p = buf->peek();
-    RtpHeader *rtp_header = (RtpHeader *)p;
-    
-    RtpPacket::Ptr packet = std::make_shared<RtpPacket>();
-    packet->seq_ = rtp_header->seq;
-    packet->buffer_->swap(*buf);
+    Buffer::Ptr buffer = std::make_shared<Buffer>(1500);
+    buffer->swap(*buf);
+
+    RtpPacket::Ptr packet = std::make_shared<RtpPacket>(buffer);
     packet->receiveTime_ = receiveTime;
 
     jitterBuffer_.inputRtpPacket(packet);
